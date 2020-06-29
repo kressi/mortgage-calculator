@@ -16,8 +16,13 @@ type alias Model = {
   loanRateNoAmo : Float,
   loanRate : Float,
   amoDurationYears : Int,
-  intrstRateSust : Float,
-  intrstRateActual : Float }
+  intrstRate : Float,
+  intrstAmt : Int,
+  maintRate : Float,
+  maintAmt : Int,
+  income : Int,
+  amoAmt : Int,
+  sustainabilityRate : Float }
 
 init : Model
 init = {
@@ -27,8 +32,13 @@ init = {
   loanRateNoAmo = 0.65,
   loanRate = 0.8,
   amoDurationYears = 15,
-  intrstRateSust = 0.05,
-  intrstRateActual = 0.01  }
+  intrstRate = 0.05,
+  intrstAmt = 0,
+  maintRate = 0.01,
+  maintAmt = 0,
+  income = 80000,
+  amoAmt = 0,
+  sustainabilityRate = 0  }
 
 type Msg
   = PropertyVal String
@@ -37,8 +47,12 @@ type Msg
   | LoanRateNoAmo String
   | LoanRate String
   | AmoDurationYears String
-  | IntrstRateSust String
-  | IntrstRateActual String
+  | IntrstRate String
+  | IntrstAmt String
+  | MaintRate String
+  | MaintAmt String
+  | Income String
+  | AmoAmt String
   | Calculate
 
 update : Msg -> Model -> Model
@@ -55,45 +69,64 @@ update msg model =
 
 recalculate : Model -> Model
 recalculate model = {
-  model | loanAmt = model.propertyVal - model.ownResources }
+  model | loanAmt = loanAmt model.propertyVal model.ownResources,
+          loanRate = loanRate model.propertyVal model.ownResources }
+
+loanAmt : Int -> Int -> Int
+loanAmt property resources = property - resources
+
+loanRate : Int -> Int -> Float
+loanRate property resources = toFloat (loanAmt property resources) / toFloat property
 
 view : Model -> Html Msg
 view model =
   div [] [ 
-    div [] [
-      text "Property Value ",
-      viewInputInt init.propertyVal model.propertyVal False PropertyVal
-    ],
-    div [] [
-      text "Own Resources ",
-      viewInputInt init.ownResources model.ownResources False OwnResources
-    ],
-    div [] [
-      text "Loan Amount ",
-      viewInputInt init.loanAmt model.loanAmt True LoanAmt
-    ],
-    div [] [
-      text "Loan Rate w/o Amortization (1st)",
-      viewInputFloat init.loanRateNoAmo model.loanRateNoAmo True LoanRateNoAmo
-    ],
-    div [] [
-      text "Loan Rate (1st & 2nd)",
-      viewInputFloat init.loanRate model.loanRate True LoanRate
-    ],
-    div [] [
-      text "Amortization Duration in Years (2nd)",
-      viewInputInt init.amoDurationYears model.amoDurationYears True AmoDurationYears
-    ],
-    div [] [
-      text "Interest Rate for Sustainability Check",
-      viewInputFloat init.intrstRateSust model.intrstRateSust True IntrstRateSust
-    ],
-    div [] [
-      text "Actual Interest Rate",
-      viewInputFloat init.intrstRateActual model.intrstRateActual False IntrstRateActual
-    ],
+    viewField
+      "Kaufpreis "
+      (viewInputInt init.propertyVal model.propertyVal False PropertyVal),
+    viewField
+      "Eigenmittel "
+      (viewInputInt init.ownResources model.ownResources False OwnResources),
+    viewField
+      "Einkommen (p.a.) "
+      (viewInputInt init.income model.income False Income),
+
+    viewField
+      "Belehnung (%) "
+      (viewInputFloat init.loanRate model.loanRate True LoanRate),
+    viewField
+      "Hypothek "
+      (viewInputInt init.loanAmt model.loanAmt True LoanAmt),
+
+    viewField
+      "Tragbarkeit (%) "
+      (text (String.fromFloat model.sustainabilityRate)),
+    viewField
+      "Hypothekarzinsen (%) "
+      (viewInputFloat init.intrstRate model.intrstRate True IntrstRate),
+    viewField
+      "Hypothekarzinsen "
+      (viewInputInt init.intrstAmt model.intrstAmt True IntrstAmt),
+    viewField
+      "Unterhalts- und Nebenkosten (%) "
+      (viewInputFloat init.maintRate model.maintRate False MaintRate),
+    viewField
+      "Unterhalts- und Nebenkosten "
+      (viewInputInt init.maintAmt model.maintAmt False MaintAmt),
+    viewField
+      "Belehnungswert nach Amartisation (%) "
+      (viewInputFloat init.loanRateNoAmo model.loanRateNoAmo True LoanRateNoAmo),
+    viewField
+      "Amortisationsdauer (Jahre) "
+      (viewInputInt init.amoDurationYears model.amoDurationYears True AmoDurationYears),
+    viewField
+      "Amortisationsbetrag "
+      (viewInputInt init.amoAmt model.amoAmt True AmoAmt),
     div [] [ button [ onClick Calculate ] [ text "Calculate" ] ]
   ]
+
+viewField : String -> (Html msg) -> Html msg
+viewField t m = div [] [ text t, m ]
 
 viewInput : String -> String -> Bool -> Bool -> (String -> msg) -> Html msg
 viewInput p v isFloat isDisabled toMsg =
@@ -112,7 +145,6 @@ viewInputInt p v =
 viewInputFloat : Float -> Float -> Bool -> (String -> msg) -> Html msg
 viewInputFloat p v =
   viewInput (String.fromFloat p) (String.fromFloat v) True
-
 
 consIf : Bool -> a -> List a -> List a
 consIf cond x xs =
