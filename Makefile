@@ -22,11 +22,12 @@ ELMFLAGS := ${ELMFLAGS_${mode}}
 all: clean dist
 
 clean:
-	printf "$(GRN)Clean $(PUBLIC_FOLDER)...$(END)\n"
+	printf "$(GRN)Clean...$(END)\n"
 	rm -rf elm-stuff
 	rm -f *.js
 
 dist:
+	printf "$(GRN)Make $(APP)...$(END)\n"
 	elm make $(ELMFLAGS) $(SRC_FILES) --output $(APP)
 
 uglify: dist
