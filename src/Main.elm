@@ -1,9 +1,9 @@
 module Main exposing (main)
 
 import Browser
-import Html.Events exposing (onClick, onInput)
-import Html.Attributes exposing (type_, placeholder, value, disabled, step)
-import Html exposing (Html, div, text, button, input)
+import Html exposing (Html)
+import Element exposing (row, column, text)
+import Element.Input as Input
 import String exposing (toInt)
 
 main : Program () Model Msg
@@ -121,69 +121,71 @@ recalcSustainabilityRate model =
 
 view : Model -> Html Msg
 view model =
-  div []
-    [ div [] [ text "Kaufpreis "
-             , viewInputInt init.propertyVal model.propertyVal False PropertyVal
-             ]
-    , div [] [ text "Eigenmittel "
-             , viewInputInt init.ownResources model.ownResources False OwnResources
-             ]
-    , div [] [ text "Einkommen (p.a.) "
-             , viewInputInt init.income model.income False Income
-             ]
-    , div [] [ text "Belehnung "
-             , text (String.fromFloat model.loanRate ++ "%")
-             ]
-    , div [] [ text "Hypothek "
-             , viewInputInt init.loanAmt model.loanAmt True LoanAmt
-             ]
-    , div [] [ text "Tragbarkeit "
-             , text (String.fromFloat model.sustainabilityRate ++ "%")
-             ]
-    , div [] [ text "Kosten p.a. "
-             , viewInputInt init.costs model.costs True Costs
-             ]
-    , div [] [ text "Hypothekarzinsen (%) "
-             , viewInputFloat init.intrstRate model.intrstRate True IntrstRate
-             ]
-    , div [] [ text "Hypothekarzinsen "
-             , viewInputInt init.intrstAmt model.intrstAmt True IntrstAmt
-             ]
-    , div [] [ text "Unterhalts- und Nebenkosten (%) "
-             , viewInputFloat init.maintRate model.maintRate True MaintRate
-             ]
-    , div [] [ text "Unterhalts- und Nebenkosten "
-             , viewInputInt init.maintAmt model.maintAmt True MaintAmt
-             ]
-    , div [] [ text "Belehnungswert nach Amartisation (%) "
-             , viewInputFloat init.loanRateNoAmo model.loanRateNoAmo True LoanRateNoAmo
-             ]
-    , div [] [ text "Amortisationsdauer (Jahre) "
-             , viewInputInt init.amoDurationYears model.amoDurationYears True AmoDurationYears
-             ]
-    , div [] [ text "Amortisationsbetrag "
-             , viewInputInt init.amoAmt model.amoAmt True AmoAmt
-             ]
-    , div [] [ button [ onClick Calculate ] [ text "Calculate" ] ]
-    ]
+  Element.layout []
+  <|
+    Element.column []
+      [ Element.row []
+        [ viewInputInt init.propertyVal model.propertyVal "Kaufpreis" False PropertyVal
+        ]
+      , Element.row []
+        [ viewInputInt init.ownResources model.ownResources "Eigenmittel" False OwnResources
+        ]
+      , Element.row []
+        [ viewInputInt init.income model.income "Einkommen (p.a.)" False Income
+        ]
+      , Element.row []
+        [ text ("Belehnung " ++ String.fromFloat model.loanRate ++ "%")
+        ]
+      , Element.row []
+        [ viewInputInt init.loanAmt model.loanAmt "Hypothek" True LoanAmt
+        ]
+      , Element.row []
+        [ text ("Tragbarkeit " ++ String.fromFloat model.sustainabilityRate ++ "%")
+        ]
+      , Element.row []
+        [ viewInputInt init.costs model.costs "Kosten p.a." True Costs
+        ]
+      , Element.row []
+        [ viewInputFloat init.intrstRate model.intrstRate "Hypothekarzinsen (%)" True IntrstRate
+        ]
+      , Element.row []
+        [ viewInputInt init.intrstAmt model.intrstAmt "Hypothekarzinsen" True IntrstAmt
+        ]
+      , Element.row []
+        [ viewInputFloat init.maintRate model.maintRate "Unterhalts- und Nebenkosten (%)" True MaintRate
+        ]
+      , Element.row []
+        [ viewInputInt init.maintAmt model.maintAmt "Unterhalts- und Nebenkosten" True MaintAmt
+        ]
+      , Element.row []
+        [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo "Belehnungswert nach Amartisation (%)" True LoanRateNoAmo
+        ]
+      , Element.row []
+        [ viewInputInt init.amoDurationYears model.amoDurationYears "Amortisationsdauer (Jahre)" True AmoDurationYears
+        ]
+      , Element.row []
+        [ viewInputInt init.amoAmt model.amoAmt "Amortisationsbetrag" True AmoAmt
+        ]
+      , Element.row []
+        [ Element.el [] (Input.button [] { onPress = Just Calculate, label = Element.text "Calculate"}) ]
+      ]
 
-viewInput : String -> String -> Bool -> Bool -> (String -> msg) -> Html msg
-viewInput p v isFloat isDisabled toMsg =
-  input (
-    [ type_ "number"
-    , placeholder p
-    , value v
-    , onInput toMsg
-    ] |> consIf isDisabled (disabled True)
-      |> consIf isFloat (step "any") ) []
+--viewInput : String -> String -> Bool -> Bool -> (String -> msg) -> Element msg
+viewInput p v l isFloat isDisabled toMsg =
+  Input.text []
+    { onChange = toMsg
+    , text = v
+    , placeholder = Just (Input.placeholder [] (text p))
+    , label = Input.labelLeft [] (text l)
+    }
 
-viewInputInt : Int -> Int -> Bool -> (String -> msg) -> Html msg
-viewInputInt p v =
-  viewInput (String.fromInt p) (String.fromInt v) False
+--viewInputInt : Int -> Int -> Bool -> (String -> msg) -> Element msg
+viewInputInt p v l =
+  viewInput (String.fromInt p) (String.fromInt v) l False
 
-viewInputFloat : Float -> Float -> Bool -> (String -> msg) -> Html msg
-viewInputFloat p v =
-  viewInput (String.fromFloat p) (String.fromFloat v) True
+--viewInputFloat : Float -> Float -> Bool -> (String -> msg) -> Element msg
+viewInputFloat p v l =
+  viewInput (String.fromFloat p) (String.fromFloat v) l True
 
 consIf : Bool -> a -> List a -> List a
 consIf cond x xs =
