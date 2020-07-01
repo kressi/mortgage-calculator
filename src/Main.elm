@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (type_, placeholder, value, disabled, step)
-import Html exposing (Html, div, text, button, input)
+import Html exposing (Html, div, text, button, input, table, tr, td)
 import String exposing (toInt)
 
 main : Program () Model Msg
@@ -121,49 +121,63 @@ recalcSustainabilityRate model =
 
 view : Model -> Html Msg
 view model =
-  div []
-    [ div [] [ text "Kaufpreis "
-             , viewInputInt init.propertyVal model.propertyVal False PropertyVal
-             ]
-    , div [] [ text "Eigenmittel "
-             , viewInputInt init.ownResources model.ownResources False OwnResources
-             ]
-    , div [] [ text "Einkommen (p.a.) "
-             , viewInputInt init.income model.income False Income
-             ]
-    , div [] [ text "Belehnung "
-             , text (String.fromFloat model.loanRate ++ "%")
-             ]
-    , div [] [ text "Hypothek "
-             , viewInputInt init.loanAmt model.loanAmt True LoanAmt
-             ]
-    , div [] [ text "Tragbarkeit "
-             , text (String.fromFloat model.sustainabilityRate ++ "%")
-             ]
-    , div [] [ text "Kosten p.a. "
-             , viewInputInt init.costs model.costs True Costs
-             ]
-    , div [] [ text "Hypothekarzinsen (%) "
-             , viewInputFloat init.intrstRate model.intrstRate True IntrstRate
-             ]
-    , div [] [ text "Hypothekarzinsen "
-             , viewInputInt init.intrstAmt model.intrstAmt True IntrstAmt
-             ]
-    , div [] [ text "Unterhalts- und Nebenkosten (%) "
-             , viewInputFloat init.maintRate model.maintRate True MaintRate
-             ]
-    , div [] [ text "Unterhalts- und Nebenkosten "
-             , viewInputInt init.maintAmt model.maintAmt True MaintAmt
-             ]
-    , div [] [ text "Belehnungswert nach Amartisation (%) "
-             , viewInputFloat init.loanRateNoAmo model.loanRateNoAmo True LoanRateNoAmo
-             ]
-    , div [] [ text "Amortisationsdauer (Jahre) "
-             , viewInputInt init.amoDurationYears model.amoDurationYears True AmoDurationYears
-             ]
-    , div [] [ text "Amortisationsbetrag "
-             , viewInputInt init.amoAmt model.amoAmt True AmoAmt
-             ]
+  table []
+    [ tr []
+        [ td [] [ text "Kaufpreis " ]
+        , td [] [ viewInputInt init.propertyVal model.propertyVal False PropertyVal ]
+        ]
+    , tr []
+        [ td [] [ text "Eigenmittel " ]
+        , td [] [ viewInputInt init.ownResources model.ownResources False OwnResources ]
+        ]
+    , tr []
+        [ td [] [ text "Einkommen (p.a.) " ]
+        , td [] [ viewInputInt init.income model.income False Income ]
+        ]
+    , tr []
+        [ td [] [ text "Belehnung " ]
+        , td [] [ text (String.fromFloat model.loanRate ++ "%") ]
+        ]
+    , tr []
+        [ td [] [ text "Hypothek " ]
+        , td [] [ viewInputInt init.loanAmt model.loanAmt True LoanAmt ]
+        ]
+    , tr []
+        [ td [] [ text "Tragbarkeit " ]
+        , td [] [ text (String.fromFloat model.sustainabilityRate ++ "%") ]
+        ]
+    , tr []
+        [ td [] [ text "Kosten p.a. " ]
+        , td [] [ viewInputInt init.costs model.costs True Costs ]
+        ]
+    , tr []
+        [ td [] [ text "Hypothekarzinsen (%) " ]
+        , td [] [ viewInputFloat init.intrstRate model.intrstRate True IntrstRate ]
+        ]
+    , tr []
+        [ td [] [ text "Hypothekarzinsen " ]
+        , td [] [ viewInputInt init.intrstAmt model.intrstAmt True IntrstAmt ]
+        ]
+    , tr []
+        [ td [] [ text "Unterhalts- und Nebenkosten (%) " ]
+        , td [] [ viewInputFloat init.maintRate model.maintRate True MaintRate ]
+        ]
+    , tr []
+        [ td [] [ text "Unterhalts- und Nebenkosten " ]
+        , td [] [ viewInputInt init.maintAmt model.maintAmt True MaintAmt ]
+        ]
+    , tr []
+        [ td [] [ text "Belehnungswert nach Amartisation (%) " ]
+        , td [] [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo True LoanRateNoAmo ]
+        ]
+    , tr []
+        [ td [] [ text "Amortisationsdauer (Jahre) " ]
+        , td [] [ viewInputInt init.amoDurationYears model.amoDurationYears True AmoDurationYears ]
+        ]
+    , tr []
+        [ td [] [ text "Amortisationsbetrag " ]
+        , td [] [ viewInputInt init.amoAmt model.amoAmt True AmoAmt ]
+        ]
     , div [] [ button [ onClick Calculate ] [ text "Calculate" ] ]
     ]
 
