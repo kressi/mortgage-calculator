@@ -9,6 +9,9 @@ import String exposing (toInt)
 main : Program () Model Msg
 main = Browser.sandbox { init = init, update = update, view = view }
 
+
+-- Model
+
 type alias Model =
   { propertyVal : Int
   , ownResources : Int
@@ -23,7 +26,9 @@ type alias Model =
   , income : Int
   , amoAmt : Int
   , costs : Int
-  , sustainabilityRate : Float }
+  , sustainabilityRate : Float
+  , sustainabilityMax : Float
+  , loanRateMax : Float }
 
 init : Model
 init =
@@ -40,13 +45,17 @@ init =
   , income = 80000
   , amoAmt = 450000
   , costs = 40000
-  , sustainabilityRate = 0.5  }
+  , sustainabilityRate = 0.5
+  , sustainabilityMax = 1.0 / 3
+  , loanRateMax = 0.8 }
 
 type Msg =
     PropertyVal String
   | OwnResources String
   | Income String
-  | Calculate
+
+
+-- Update
 
 update : Msg -> Model -> Model
 update msg model =
@@ -60,7 +69,6 @@ update msg model =
       Income income -> {
         model | income = toIntOrZero income }
         |> updateIncome
-      _ -> model
 
 updatePropertyVal : Model -> Model
 updatePropertyVal model =
@@ -110,6 +118,9 @@ recalcSustainabilityRate : Model -> Model
 recalcSustainabilityRate model =
   { model | sustainabilityRate = toFloat model.costs / toFloat model.income }
 
+
+-- View
+
 styleNumber : List (Attribute Msg)
 styleNumber =
   [ style "text-align" "right" ]
@@ -145,62 +156,61 @@ view model =
         , td [] [ viewInputInt init.propertyVal model.propertyVal (Just PropertyVal) ]
         ]
     , tr []
-        [ td [] [ text "Eigenmittel " ]
+        [ td [] [ text "Eigenmittel" ]
         , td [] [ viewInputInt init.ownResources model.ownResources (Just OwnResources) ]
         ]
     , tr []
-        [ td [] [ text "Einkommen (p.a.) " ]
+        [ td [] [ text "Einkommen (p.a.)" ]
         , td [] [ viewInputInt init.income model.income (Just Income) ]
         ]
     , tr []
-        [ td [] [ text "Belehnung " ]
+        [ td [] [ text ("Belehnung (max " ++ String.fromFloat model.loanRateMax ++ ")") ]
         , td
-            (styleNumber ++ styleStatus (model.loanRate <= 0.8))
+            (styleNumber ++ styleStatus (model.loanRate <= model.loanRateMax))
             [ text (String.fromFloat model.loanRate ++ "%") ]
         ]
     , tr []
-        [ td [] [ text "Hypothek " ]
+        [ td [] [ text "Hypothek" ]
         , td [] [ viewInputInt init.loanAmt model.loanAmt Nothing ]
         ]
     , tr []
-        [ td [] [ text "Tragbarkeit " ]
+        [ td [] [ text ("Tragbarkeit (max " ++ String.fromFloat model.sustainabilityMax ++ ")")]
         , td
-            (styleNumber ++ styleStatus (model.sustainabilityRate <= (1.0 / 3)))
+            (styleNumber ++ styleStatus (model.sustainabilityRate <= model.sustainabilityMax))
             [ text (String.fromFloat model.sustainabilityRate ++ "%") ]
         ]
     , tr []
-        [ td [] [ text "Kosten p.a. " ]
+        [ td [] [ text "Kosten p.a." ]
         , td [] [ viewInputInt init.costs model.costs Nothing ]
         ]
     , tr []
-        [ td [] [ text "Hypothekarzinsen (%) " ]
+        [ td [] [ text "Hypothekarzinsen (%)" ]
         , td [] [ viewInputFloat init.intrstRate model.intrstRate Nothing ]
         ]
     , tr []
-        [ td [] [ text "Hypothekarzinsen " ]
+        [ td [] [ text "Hypothekarzinsen" ]
         , td [] [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
         ]
     , tr []
-        [ td [] [ text "Unterhalts- und Nebenkosten (%) " ]
+        [ td [] [ text "Unterhalts- und Nebenkosten (%)" ]
         , td [] [ viewInputFloat init.maintRate model.maintRate Nothing ]
         ]
     , tr []
-        [ td [] [ text "Unterhalts- und Nebenkosten " ]
+        [ td [] [ text "Unterhalts- und Nebenkosten" ]
         , td [] [ viewInputInt init.maintAmt model.maintAmt Nothing ]
         ]
     , tr []
-        [ td [] [ text "Belehnungswert nach Amartisation (%) " ]
+        [ td [] [ text "Belehnungswert nach Amartisation (%)" ]
         , td [] [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo Nothing ]
         ]
     , tr []
-        [ td [] [ text "Amortisationsdauer (Jahre) " ]
+        [ td [] [ text "Amortisationsdauer (Jahre)" ]
         , td [] [ viewInputInt init.amoDurationYears model.amoDurationYears Nothing ]
         ]
     , tr []
-        [ td [] [ text "Amortisationsbetrag " ]
+        [ td [] [ text "Amortisationsbetrag" ]
         , td [] [ viewInputInt init.amoAmt model.amoAmt Nothing ]
         ]
-    , div [] [ button [ onClick Calculate ] [ text "Calculate" ] ]
     ]
 
 viewInput : String -> String -> Bool -> Maybe (String -> Msg) -> Html Msg
