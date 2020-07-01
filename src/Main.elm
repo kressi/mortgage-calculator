@@ -2,8 +2,8 @@ module Main exposing (main)
 
 import Browser
 import Html.Events exposing (onClick, onInput)
-import Html.Attributes exposing (type_, placeholder, value, disabled, step)
-import Html exposing (Html, div, text, button, input, table, tr, td)
+import Html.Attributes exposing (type_, placeholder, value, disabled, step, style)
+import Html exposing (Html, Attribute, div, text, button, input, table, tr, td)
 import String exposing (toInt)
 
 main : Program () Model Msg
@@ -28,8 +28,8 @@ type alias Model =
 init : Model
 init =
   { propertyVal = 1000000
-  , ownResources = 800000
-  , loanAmt = 200000
+  , ownResources = 200000
+  , loanAmt = 800000
   , loanRateNoAmo = 0.65
   , loanRate = 0.8
   , amoDurationYears = 15
@@ -45,29 +45,20 @@ init =
 type Msg =
     PropertyVal String
   | OwnResources String
-  | LoanAmt String
-  | LoanRateNoAmo String
-  | AmoDurationYears String
-  | IntrstRate String
-  | IntrstAmt String
-  | MaintRate String
-  | MaintAmt String
   | Income String
-  | AmoAmt String
-  | Costs String
   | Calculate
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
       PropertyVal propertyVal -> {
-        model | propertyVal = Maybe.withDefault 0 (String.toInt propertyVal) }
+        model | propertyVal = toIntOrZero propertyVal }
         |> updatePropertyVal
       OwnResources ownResources -> {
-        model | ownResources = Maybe.withDefault 0 (String.toInt ownResources) }
+        model | ownResources = toIntOrZero ownResources }
         |> updateOwnResources
       Income income -> {
-        model | income = Maybe.withDefault 0 (String.toInt income) }
+        model | income = toIntOrZero income }
         |> updateIncome
       _ -> model
 
@@ -119,83 +110,116 @@ recalcSustainabilityRate : Model -> Model
 recalcSustainabilityRate model =
   { model | sustainabilityRate = toFloat model.costs / toFloat model.income }
 
+styleNumber : List (Attribute Msg)
+styleNumber =
+  [ style "text-align" "right" ]
+
+styleThick : List (Attribute Msg)
+styleThick =
+  [ style "font-weight" "bold"]
+
+styleGreen : List (Attribute Msg)
+styleGreen =
+  [ style "background-color" "lawngreen"
+  , style "color" "darkgreen"
+  ] ++ styleThick
+
+styleRed : List (Attribute Msg)
+styleRed =
+  [ style "background-color" "orange"
+  , style "color" "darkred"
+  ] ++ styleThick
+
+styleStatus : Bool -> List (Attribute Msg)
+styleStatus cond =
+  if cond then
+    styleGreen
+  else
+    styleRed
+
 view : Model -> Html Msg
 view model =
   table []
     [ tr []
         [ td [] [ text "Kaufpreis " ]
-        , td [] [ viewInputInt init.propertyVal model.propertyVal False PropertyVal ]
+        , td [] [ viewInputInt init.propertyVal model.propertyVal (Just PropertyVal) ]
         ]
     , tr []
         [ td [] [ text "Eigenmittel " ]
-        , td [] [ viewInputInt init.ownResources model.ownResources False OwnResources ]
+        , td [] [ viewInputInt init.ownResources model.ownResources (Just OwnResources) ]
         ]
     , tr []
         [ td [] [ text "Einkommen (p.a.) " ]
-        , td [] [ viewInputInt init.income model.income False Income ]
+        , td [] [ viewInputInt init.income model.income (Just Income) ]
         ]
     , tr []
         [ td [] [ text "Belehnung " ]
-        , td [] [ text (String.fromFloat model.loanRate ++ "%") ]
+        , td
+            (styleNumber ++ styleStatus (model.loanRate <= 0.8))
+            [ text (String.fromFloat model.loanRate ++ "%") ]
         ]
     , tr []
         [ td [] [ text "Hypothek " ]
-        , td [] [ viewInputInt init.loanAmt model.loanAmt True LoanAmt ]
+        , td [] [ viewInputInt init.loanAmt model.loanAmt Nothing ]
         ]
     , tr []
         [ td [] [ text "Tragbarkeit " ]
-        , td [] [ text (String.fromFloat model.sustainabilityRate ++ "%") ]
+        , td
+            (styleNumber ++ styleStatus (model.sustainabilityRate <= (1.0 / 3)))
+            [ text (String.fromFloat model.sustainabilityRate ++ "%") ]
         ]
     , tr []
         [ td [] [ text "Kosten p.a. " ]
-        , td [] [ viewInputInt init.costs model.costs True Costs ]
+        , td [] [ viewInputInt init.costs model.costs Nothing ]
         ]
     , tr []
         [ td [] [ text "Hypothekarzinsen (%) " ]
-        , td [] [ viewInputFloat init.intrstRate model.intrstRate True IntrstRate ]
+        , td [] [ viewInputFloat init.intrstRate model.intrstRate Nothing ]
         ]
     , tr []
         [ td [] [ text "Hypothekarzinsen " ]
-        , td [] [ viewInputInt init.intrstAmt model.intrstAmt True IntrstAmt ]
+        , td [] [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
         ]
     , tr []
         [ td [] [ text "Unterhalts- und Nebenkosten (%) " ]
-        , td [] [ viewInputFloat init.maintRate model.maintRate True MaintRate ]
+        , td [] [ viewInputFloat init.maintRate model.maintRate Nothing ]
         ]
     , tr []
         [ td [] [ text "Unterhalts- und Nebenkosten " ]
-        , td [] [ viewInputInt init.maintAmt model.maintAmt True MaintAmt ]
+        , td [] [ viewInputInt init.maintAmt model.maintAmt Nothing ]
         ]
     , tr []
         [ td [] [ text "Belehnungswert nach Amartisation (%) " ]
-        , td [] [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo True LoanRateNoAmo ]
+        , td [] [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo Nothing ]
         ]
     , tr []
         [ td [] [ text "Amortisationsdauer (Jahre) " ]
-        , td [] [ viewInputInt init.amoDurationYears model.amoDurationYears True AmoDurationYears ]
+        , td [] [ viewInputInt init.amoDurationYears model.amoDurationYears Nothing ]
         ]
     , tr []
         [ td [] [ text "Amortisationsbetrag " ]
-        , td [] [ viewInputInt init.amoAmt model.amoAmt True AmoAmt ]
+        , td [] [ viewInputInt init.amoAmt model.amoAmt Nothing ]
         ]
     , div [] [ button [ onClick Calculate ] [ text "Calculate" ] ]
     ]
 
-viewInput : String -> String -> Bool -> Bool -> (String -> msg) -> Html msg
-viewInput p v isFloat isDisabled toMsg =
-  input (
-    [ type_ "number"
-    , placeholder p
-    , value v
-    , onInput toMsg
-    ] |> consIf isDisabled (disabled True)
-      |> consIf isFloat (step "any") ) []
+viewInput : String -> String -> Bool -> Maybe (String -> Msg) -> Html Msg
+viewInput p v isFloat toMsg =
+  input
+    ( styleNumber ++
+      [ type_ "number"
+      , placeholder p
+      , value v
+      ] |> consJust (Maybe.map onInput toMsg)
+        |> consIf (toMsg == Nothing) (disabled True)
+        |> consIf isFloat (step "any")
+    ) []
 
-viewInputInt : Int -> Int -> Bool -> (String -> msg) -> Html msg
+viewInputInt : Int -> Int -> Maybe (String -> Msg) -> Html Msg
 viewInputInt p v =
   viewInput (String.fromInt p) (String.fromInt v) False
 
-viewInputFloat : Float -> Float -> Bool -> (String -> msg) -> Html msg
+viewInputFloat : Float -> Float -> Maybe (String -> Msg) -> Html Msg
 viewInputFloat p v =
   viewInput (String.fromFloat p) (String.fromFloat v) True
 
@@ -205,3 +229,21 @@ consIf cond x xs =
     x :: xs
   else
     xs
+
+ifThenElse : Bool -> a -> a -> a
+ifThenElse cond x y =
+  if cond then
+    x
+  else
+    y
+
+consJust : Maybe a -> List a -> List a
+consJust maybe list =
+  case maybe of
+    Just value -> value :: list
+    Nothing -> list
+
+toIntOrZero : String -> Int
+toIntOrZero s =
+  String.toInt s
+    |> Maybe.withDefault 0
