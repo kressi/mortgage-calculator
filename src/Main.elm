@@ -15,6 +15,7 @@ main = Browser.sandbox { init = init, update = update, view = view }
 type alias Model =
   { propertyVal : Int
   , ownResources : Int
+  , income : Int
   , loanAmt : Int
   , loanRateNoAmo : Float
   , loanRate : Float
@@ -23,8 +24,8 @@ type alias Model =
   , intrstAmt : Int
   , maintRate : Float
   , maintAmt : Int
-  , income : Int
   , amoAmt : Int
+  , amoAmtYearly : Int
   , costs : Int
   , sustainabilityRate : Float
   , sustainabilityMax : Float
@@ -34,6 +35,7 @@ init : Model
 init =
   { propertyVal = 1000000
   , ownResources = 200000
+  , income = 80000
   , loanAmt = 800000
   , loanRateNoAmo = 0.65
   , loanRate = 0.8
@@ -42,11 +44,11 @@ init =
   , intrstAmt = 40000
   , maintRate = 0.01
   , maintAmt = 10000
-  , income = 80000
-  , amoAmt = 450000
-  , costs = 40000
+  , amoAmt = 150000
+  , amoAmtYearly = 10000
+  , costs = 60000
   , sustainabilityRate = 0.5
-  , sustainabilityMax = 1.0 / 3
+  , sustainabilityMax = 0.33
   , loanRateMax = 0.8 }
 
 type Msg =
@@ -87,6 +89,7 @@ updateLoanAmt model =
   recalcInstrAmt model
     |> recalcLoanRate
     |> recalcAmoAmt
+    |> recalcAmoAmtYearly
     |> recalcCosts
     |> recalcSustainabilityRate
 
@@ -108,11 +111,15 @@ recalcLoanRate model =
 
 recalcAmoAmt : Model -> Model
 recalcAmoAmt model =
-  { model | amoAmt = Basics.max 0 (round (toFloat model.propertyVal * model.loanRateNoAmo) - model.loanAmt) }
+  { model | amoAmt = Basics.max 0 (model.loanAmt - round (toFloat model.propertyVal * model.loanRateNoAmo)) }
+
+recalcAmoAmtYearly : Model -> Model
+recalcAmoAmtYearly model =
+  { model | amoAmtYearly = round (toFloat model.amoAmt / toFloat model.amoDurationYears) }
 
 recalcCosts : Model -> Model
 recalcCosts model =
-  { model | costs = round (toFloat model.amoAmt / toFloat model.amoDurationYears) + model.intrstAmt }
+  { model | costs = model.amoAmtYearly + model.intrstAmt + model.maintAmt }
 
 recalcSustainabilityRate : Model -> Model
 recalcSustainabilityRate model =
@@ -148,73 +155,84 @@ styleStatus cond =
   else
     styleRed
 
+styleBorder : List(Attribute Msg)
+styleBorder =
+  [ style "border" "1px solid"
+  , style "border-radius" "5px"
+  , style "margin" "2px"
+  ]
+
 view : Model -> Html Msg
 view model =
-  table []
-    [ tr []
-        [ td [] [ text "Kaufpreis " ]
-        , td [] [ viewInputInt init.propertyVal model.propertyVal (Just PropertyVal) ]
-        ]
-    , tr []
-        [ td [] [ text "Eigenmittel" ]
-        , td [] [ viewInputInt init.ownResources model.ownResources (Just OwnResources) ]
-        ]
-    , tr []
-        [ td [] [ text "Einkommen (p.a.)" ]
-        , td [] [ viewInputInt init.income model.income (Just Income) ]
-        ]
-    , tr []
-        [ td [] [ text ("Belehnung (max " ++ String.fromFloat model.loanRateMax ++ ")") ]
-        , td
-            (styleNumber ++ styleStatus (model.loanRate <= model.loanRateMax))
-            [ text (String.fromFloat model.loanRate ++ "%") ]
-        ]
-    , tr []
-        [ td [] [ text "Hypothek" ]
-        , td [] [ viewInputInt init.loanAmt model.loanAmt Nothing ]
-        ]
-    , tr []
-        [ td [] [ text ("Tragbarkeit (max " ++ String.fromFloat model.sustainabilityMax ++ ")")]
-        , td
-            (styleNumber ++ styleStatus (model.sustainabilityRate <= model.sustainabilityMax))
-            [ text (String.fromFloat model.sustainabilityRate ++ "%") ]
-        ]
-    , tr []
-        [ td [] [ text "Kosten p.a." ]
-        , td [] [ viewInputInt init.costs model.costs Nothing ]
-        ]
-    , tr []
-        [ td [] [ text "Hypothekarzinsen (%)" ]
-        , td [] [ viewInputFloat init.intrstRate model.intrstRate Nothing ]
-        ]
-    , tr []
-        [ td [] [ text "Hypothekarzinsen" ]
-        , td [] [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
-        ]
-    , tr []
-        [ td [] [ text "Unterhalts- und Nebenkosten (%)" ]
-        , td [] [ viewInputFloat init.maintRate model.maintRate Nothing ]
-        ]
-    , tr []
-        [ td [] [ text "Unterhalts- und Nebenkosten" ]
-        , td [] [ viewInputInt init.maintAmt model.maintAmt Nothing ]
-        ]
-    , tr []
-        [ td [] [ text "Belehnungswert nach Amartisation (%)" ]
-        , td [] [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo Nothing ]
-        ]
-    , tr []
-        [ td [] [ text "Amortisationsdauer (Jahre)" ]
-        , td [] [ viewInputInt init.amoDurationYears model.amoDurationYears Nothing ]
-        ]
-    , tr []
-        [ td [] [ text "Amortisationsbetrag" ]
-        , td [] [ viewInputInt init.amoAmt model.amoAmt Nothing ]
-        ]
-    ]
+  div [] 
+  [ table styleBorder
+      [ tr []
+          [ td [] [ text "Kaufpreis " ]
+          , td [] [ viewInputInt init.propertyVal model.propertyVal (Just PropertyVal) ]
+          ]
+      , tr []
+          [ td [] [ text "Eigenmittel" ]
+          , td [] [ viewInputInt init.ownResources model.ownResources (Just OwnResources) ]
+          ]
+      , tr []
+          [ td [] [ text "Einkommen p.a." ]
+          , td [] [ viewInputInt init.income model.income (Just Income) ]
+          ]
+      ],
+    table styleBorder
+      [ tr []
+          [ td [] [ text "Hypothek" ]
+          , td [] [ viewInputInt init.loanAmt model.loanAmt Nothing ]
+          ]
+      , tr []
+          [ td [] [ text ("Belehnung (max " ++ String.fromFloat model.loanRateMax ++ ")") ]
+          , td
+              (styleNumber ++ styleStatus (model.loanRate <= model.loanRateMax))
+              [ text (String.fromFloat (round2 model.loanRate)) ]
+          ]
+      ],
+    table styleBorder
+      [ tr []
+          [ td [] [ text "Belehnungsrate nach Amortisation" ]
+          , td [] [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo Nothing ]
+          ]
+      , tr []
+          [ td [] [ text "Amortisationsdauer (Jahre)" ]
+          , td [] [ viewInputInt init.amoDurationYears model.amoDurationYears Nothing ]
+          ]
+      , tr []
+          [ td [] [ text "Amortisationsbetrag" ]
+          , td [] [ viewInputInt init.amoAmt model.amoAmt Nothing ]
+          ]
+      ],
+    table styleBorder
+      [ tr []
+          [ td [] [ text ("Hypothekarzinsen p.a. (" ++ String.fromFloat model.intrstRate ++ ")") ]
+          , td [] [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
+          ]
+      , tr []
+          [ td [] [ text "Amortisationsbetrag p.a." ]
+          , td [] [ viewInputInt init.amoAmtYearly model.amoAmtYearly Nothing ]
+          ]
+      , tr []
+          [ td [] [ text ("Unterhalts- und Nebenkosten p.a. (" ++ String.fromFloat model.maintRate ++ ")") ]
+          , td [] [ viewInputInt init.maintAmt model.maintAmt Nothing ]
+          ]
+      , tr []
+          [ td [] [ text "Kosten p.a." ]
+          , td [] [ viewInputInt init.costs model.costs Nothing ]
+          ]
+      , tr []
+          [ td [] [ text ("Tragbarkeit (max " ++ String.fromFloat model.sustainabilityMax ++ ")")]
+          , td
+              (styleNumber ++ styleStatus (model.sustainabilityRate <= model.sustainabilityMax))
+              [ text (String.fromFloat (round2 model.sustainabilityRate)) ]
+          ]
+      ]
+  ]
 
-viewInput : String -> String -> Bool -> Maybe (String -> Msg) -> Html Msg
-viewInput p v isFloat toMsg =
+viewInput : String -> String -> Maybe String -> Maybe (String -> Msg) -> Html Msg
+viewInput p v s toMsg =
   input
     ( styleNumber ++
       [ type_ "number"
@@ -222,16 +240,16 @@ viewInput p v isFloat toMsg =
       , value v
       ] |> consJust (Maybe.map onInput toMsg)
         |> consIf (toMsg == Nothing) (disabled True)
-        |> consIf isFloat (step "any")
+        |> consJust (Maybe.map step s)
     ) []
 
 viewInputInt : Int -> Int -> Maybe (String -> Msg) -> Html Msg
 viewInputInt p v =
-  viewInput (String.fromInt p) (String.fromInt v) False
+  viewInput (String.fromInt p) (String.fromInt v) (Just "1000")
 
 viewInputFloat : Float -> Float -> Maybe (String -> Msg) -> Html Msg
 viewInputFloat p v =
-  viewInput (String.fromFloat p) (String.fromFloat v) True
+  viewInput (String.fromFloat (round2 p)) (String.fromFloat (round2 v)) (Just "any")
 
 consIf : Bool -> a -> List a -> List a
 consIf cond x xs =
@@ -257,3 +275,7 @@ toIntOrZero : String -> Int
 toIntOrZero s =
   String.toInt s
     |> Maybe.withDefault 0
+
+round2 : Float -> Float
+round2 num =
+  toFloat (round (num * 100)) / 100
