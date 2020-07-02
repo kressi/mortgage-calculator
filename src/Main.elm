@@ -160,7 +160,12 @@ styleBorder =
   [ style "border" "1px solid"
   , style "border-radius" "5px"
   , style "margin" "2px"
+  , style "width" "35em"
   ]
+
+styleInputCell : List(Attribute Msg)
+styleInputCell =
+  [ style "width" "1px"]
 
 view : Model -> Html Msg
 view model =
@@ -168,7 +173,7 @@ view model =
   [ table styleBorder
       [ tr []
           [ td [] [ text "Kaufpreis " ]
-          , td [] [ viewInputInt init.propertyVal model.propertyVal (Just PropertyVal) ]
+          , td styleInputCell [ viewInputInt init.propertyVal model.propertyVal (Just PropertyVal) ]
           ]
       , tr []
           [ td [] [ text "Eigenmittel" ]
@@ -182,7 +187,7 @@ view model =
     table styleBorder
       [ tr []
           [ td [] [ text "Hypothek" ]
-          , td [] [ viewInputInt init.loanAmt model.loanAmt Nothing ]
+          , td styleInputCell [ viewInputInt init.loanAmt model.loanAmt Nothing ]
           ]
       , tr []
           [ td [] [ text ("Belehnung (max " ++ String.fromFloat model.loanRateMax ++ ")") ]
@@ -194,7 +199,7 @@ view model =
     table styleBorder
       [ tr []
           [ td [] [ text "Belehnungsrate nach Amortisation" ]
-          , td [] [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo Nothing ]
+          , td styleInputCell [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo Nothing ]
           ]
       , tr []
           [ td [] [ text "Amortisationsdauer (Jahre)" ]
@@ -208,7 +213,7 @@ view model =
     table styleBorder
       [ tr []
           [ td [] [ text ("Hypothekarzinsen p.a. (" ++ String.fromFloat model.intrstRate ++ ")") ]
-          , td [] [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
+          , td styleInputCell [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
           ]
       , tr []
           [ td [] [ text "Amortisationsbetrag p.a." ]
