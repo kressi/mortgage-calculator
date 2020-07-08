@@ -55,6 +55,7 @@ type Msg =
     PropertyVal String
   | OwnResources String
   | Income String
+  | IntrstRate String
 
 
 -- Update
@@ -71,12 +72,20 @@ update msg model =
       Income income -> {
         model | income = toIntOrZero income }
         |> updateIncome
+      IntrstRate intrstRate -> {
+        model | intrstRate = toFloatOrZero intrstRate }
+        |> updateIntrstRate
 
 updatePropertyVal : Model -> Model
-updatePropertyVal model =
-  recalcLoanAmt model
-    |> recalcMaintAmt
-    |> updateLoanAmt
+updatePropertyVal =
+  recalcLoanAmt
+  >> recalcMaintAmt
+  >> recalcIntrstAmt
+  >> recalcLoanRate
+  >> recalcAmoAmt
+  >> recalcAmoAmtYearly
+  >> recalcCosts
+  >> recalcSustainabilityRate
 
 updateOwnResources : Model -> Model
 updateOwnResources = updatePropertyVal
@@ -84,14 +93,11 @@ updateOwnResources = updatePropertyVal
 updateIncome : Model -> Model
 updateIncome = recalcSustainabilityRate
 
-updateLoanAmt : Model -> Model
-updateLoanAmt model =
-  recalcInstrAmt model
-    |> recalcLoanRate
-    |> recalcAmoAmt
-    |> recalcAmoAmtYearly
-    |> recalcCosts
-    |> recalcSustainabilityRate
+updateIntrstRate : Model -> Model
+updateIntrstRate =
+  recalcIntrstAmt
+  >> recalcCosts
+  >> recalcSustainabilityRate
 
 recalcLoanAmt : Model -> Model
 recalcLoanAmt model =
@@ -101,8 +107,8 @@ recalcMaintAmt : Model -> Model
 recalcMaintAmt model =
   { model | maintAmt = round (toFloat model.propertyVal * model.maintRate) }
 
-recalcInstrAmt : Model -> Model
-recalcInstrAmt model =
+recalcIntrstAmt : Model -> Model
+recalcIntrstAmt model =
   { model | intrstAmt = round (toFloat model.loanAmt * model.intrstRate) }
 
 recalcLoanRate : Model -> Model
@@ -163,9 +169,15 @@ styleBorder =
   , style "width" "35em"
   ]
 
-styleInputCell : List(Attribute Msg)
+styleInputCell : List (Attribute Msg)
 styleInputCell =
   [ style "width" "1px"]
+
+styleInlineInput : List (Attribute Msg)
+styleInlineInput = 
+  [ style "-moz-appearance" "textfield"
+  , style "width" "4em"
+  ]
 
 view : Model -> Html Msg
 view model =
@@ -212,7 +224,11 @@ view model =
       ],
     table styleBorder
       [ tr []
-          [ td [] [ text ("Hypothekarzinsen p.a. (" ++ String.fromFloat model.intrstRate ++ ")") ]
+          [ td []
+              [ text "Hypothekarzinsen "
+              , viewInputFloatSmall init.intrstRate model.intrstRate (Just IntrstRate)
+              , text " p.a."
+              ]
           , td styleInputCell [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
           ]
       , tr []
@@ -236,10 +252,10 @@ view model =
       ]
   ]
 
-viewInput : String -> String -> Maybe String -> Maybe (String -> Msg) -> Html Msg
-viewInput p v s toMsg =
+viewInput : String -> String -> Maybe String -> List (Attribute Msg) -> Maybe (String -> Msg) -> Html Msg
+viewInput p v s style toMsg =
   input
-    ( styleNumber ++
+    ( styleNumber ++ style ++
       [ type_ "number"
       , placeholder p
       , value v
@@ -250,11 +266,15 @@ viewInput p v s toMsg =
 
 viewInputInt : Int -> Int -> Maybe (String -> Msg) -> Html Msg
 viewInputInt p v =
-  viewInput (String.fromInt p) (String.fromInt v) (Just "1000")
+  viewInput (String.fromInt p) (String.fromInt v) (Just "1000") []
 
 viewInputFloat : Float -> Float -> Maybe (String -> Msg) -> Html Msg
 viewInputFloat p v =
-  viewInput (String.fromFloat (round2 p)) (String.fromFloat (round2 v)) (Just "any")
+  viewInput (String.fromFloat (round2 p)) (String.fromFloat (round2 v)) (Just "any") []
+
+viewInputFloatSmall : Float -> Float -> Maybe (String -> Msg) -> Html Msg
+viewInputFloatSmall p v =
+  viewInput (String.fromFloat (round2 p)) (String.fromFloat (round2 v)) (Just "any") styleInlineInput
 
 consIf : Bool -> a -> List a -> List a
 consIf cond x xs =
@@ -279,6 +299,11 @@ consJust maybe list =
 toIntOrZero : String -> Int
 toIntOrZero s =
   String.toInt s
+    |> Maybe.withDefault 0
+
+toFloatOrZero : String -> Float
+toFloatOrZero s =
+  String.toFloat s
     |> Maybe.withDefault 0
 
 round2 : Float -> Float
