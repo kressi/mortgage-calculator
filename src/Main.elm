@@ -166,12 +166,7 @@ styleBorder =
   [ style "border" "1px solid"
   , style "border-radius" "5px"
   , style "margin" "2px"
-  , style "width" "35em"
   ]
-
-styleInputCell : List (Attribute Msg)
-styleInputCell =
-  [ style "width" "1px"]
 
 styleInlineInput : List (Attribute Msg)
 styleInlineInput = 
@@ -179,73 +174,87 @@ styleInlineInput =
   , style "width" "4em"
   ]
 
+styleRow : List (Attribute Msg)
+styleRow =
+  [ style "display" "flex"
+  , style "flex-wrap" "wrap"
+  ]
+
+styleLabel : List (Attribute Msg)
+styleLabel =
+  [ style "min-width" "21em"
+  ]
+
 view : Model -> Html Msg
 view model =
-  div [] 
-  [ table styleBorder
-      [ tr []
-          [ td [] [ text "Kaufpreis " ]
-          , td styleInputCell [ viewInputInt init.propertyVal model.propertyVal (Just PropertyVal) ]
+  div
+    [ style "display" "grid"
+    , style "justify-content" "center"
+    ]
+  [ div styleBorder
+      [ div styleRow
+          [ div styleLabel [ text "Kaufpreis" ]
+          , div [] [ viewInputInt init.propertyVal model.propertyVal (Just PropertyVal) ]
           ]
-      , tr []
-          [ td [] [ text "Eigenmittel" ]
-          , td [] [ viewInputInt init.ownResources model.ownResources (Just OwnResources) ]
+      , div styleRow
+          [ div styleLabel [ text "Eigenmittel" ]
+          , div [] [ viewInputInt init.ownResources model.ownResources (Just OwnResources) ]
           ]
-      , tr []
-          [ td [] [ text "Einkommen p.a." ]
-          , td [] [ viewInputInt init.income model.income (Just Income) ]
+      , div styleRow
+          [ div styleLabel [ text "Einkommen p.a." ]
+          , div [] [ viewInputInt init.income model.income (Just Income) ]
           ]
       ],
-    table styleBorder
-      [ tr []
-          [ td [] [ text "Hypothek" ]
-          , td styleInputCell [ viewInputInt init.loanAmt model.loanAmt Nothing ]
+    div styleBorder
+      [ div styleRow
+          [ div styleLabel [ text "Hypothek" ]
+          , div [] [ viewInputInt init.loanAmt model.loanAmt Nothing ]
           ]
-      , tr []
-          [ td [] [ text ("Belehnung (max " ++ String.fromFloat model.loanRateMax ++ ")") ]
-          , td
+      , div styleRow
+          [ div styleLabel [ text ("Belehnung (max " ++ String.fromFloat model.loanRateMax ++ ")") ]
+          , div
               (styleNumber ++ styleStatus (model.loanRate <= model.loanRateMax))
               [ text (String.fromFloat (round2 model.loanRate)) ]
           ]
       ],
-    table styleBorder
-      [ tr []
-          [ td [] [ text "Belehnungsrate nach Amortisation" ]
-          , td styleInputCell [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo Nothing ]
+    div styleBorder
+      [ div styleRow
+          [ div styleLabel [ text "Belehnungsrate nach Amortisation" ]
+          , div [] [ viewInputFloat init.loanRateNoAmo model.loanRateNoAmo Nothing ]
           ]
-      , tr []
-          [ td [] [ text "Amortisationsdauer (Jahre)" ]
-          , td [] [ viewInputInt init.amoDurationYears model.amoDurationYears Nothing ]
+      , div styleRow
+          [ div styleLabel [ text "Amortisationsdauer (Jahre)" ]
+          , div [] [ viewInputInt init.amoDurationYears model.amoDurationYears Nothing ]
           ]
-      , tr []
-          [ td [] [ text "Amortisationsbetrag" ]
-          , td [] [ viewInputInt init.amoAmt model.amoAmt Nothing ]
+      , div styleRow
+          [ div styleLabel [ text "Amortisationsbetrag" ]
+          , div [] [ viewInputInt init.amoAmt model.amoAmt Nothing ]
           ]
       ],
-    table styleBorder
-      [ tr []
-          [ td []
+    div styleBorder
+      [ div styleRow
+          [ div styleLabel
               [ text "Hypothekarzinsen "
               , viewInputFloatSmall init.intrstRate model.intrstRate (Just IntrstRate)
               , text " p.a."
               ]
-          , td styleInputCell [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
+          , div [] [ viewInputInt init.intrstAmt model.intrstAmt Nothing ]
           ]
-      , tr []
-          [ td [] [ text "Amortisationsbetrag p.a." ]
-          , td [] [ viewInputInt init.amoAmtYearly model.amoAmtYearly Nothing ]
+      , div styleRow
+          [ div styleLabel [ text "Amortisationsbetrag p.a." ]
+          , div [] [ viewInputInt init.amoAmtYearly model.amoAmtYearly Nothing ]
           ]
-      , tr []
-          [ td [] [ text ("Unterhalts- und Nebenkosten p.a. (" ++ String.fromFloat model.maintRate ++ ")") ]
-          , td [] [ viewInputInt init.maintAmt model.maintAmt Nothing ]
+      , div styleRow
+          [ div styleLabel [ text ("Unterhalts- und Nebenkosten p.a. (" ++ String.fromFloat model.maintRate ++ ")") ]
+          , div [] [ viewInputInt init.maintAmt model.maintAmt Nothing ]
           ]
-      , tr []
-          [ td [] [ text "Kosten p.a." ]
-          , td [] [ viewInputInt init.costs model.costs Nothing ]
+      , div styleRow
+          [ div styleLabel [ text "Kosten p.a." ]
+          , div [] [ viewInputInt init.costs model.costs Nothing ]
           ]
-      , tr []
-          [ td [] [ text ("Tragbarkeit (max " ++ String.fromFloat model.sustainabilityMax ++ ")")]
-          , td
+      , div styleRow
+          [ div styleLabel [ text ("Tragbarkeit (max " ++ String.fromFloat model.sustainabilityMax ++ ")")]
+          , div
               (styleNumber ++ styleStatus (model.sustainabilityRate <= model.sustainabilityMax))
               [ text (String.fromFloat (round2 model.sustainabilityRate)) ]
           ]
